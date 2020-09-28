@@ -1,5 +1,7 @@
 #pragma once
 
+/*
+
 #include "ProcessRunner.hpp"
 
 #include <future>
@@ -9,8 +11,8 @@
 
 #include <boost/asio/io_service.hpp>
 
-template<typename ResultType>
-inline lab::ProcessRunner<ResultType>::ProcessRunner(fs::path path) noexcept
+template<typename Res>
+inline lab::ProcessRunner<Res>::ProcessRunner(fs::path path) noexcept
     : _path{std::move(path)}
 {}
 

@@ -2,8 +2,8 @@
 
 #include "ShortCircuitOperation.hpp"
 
-template<auto Operation, std::equality_comparable T>
-lab::ShortCircuitOperation<Operation, T>::ShortCircuitOperation(
+template <auto Op, std::equality_comparable T>
+lab::ShortCircuitOperation<Op, T>::ShortCircuitOperation(
         const std::size_t arity,
         const T& short_circuit_value)
         : _operands(arity),
@@ -44,11 +44,4 @@ auto lab::ShortCircuitOperation<Op, T>::arity() const noexcept -> std::size_t
 {
     return _operands.size();
 }
-
-//template<typename Operation, std::equality_comparable T>
-//auto lab::ShortCircuitOperation<Operation, T>::set_arity(const std::size_t n) -> void
-//{
-//    _operands.clear();
-//    _operands.resize(n);
-//}
 

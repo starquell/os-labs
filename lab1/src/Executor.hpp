@@ -4,6 +4,9 @@
 
 namespace lab {
 
+    /**
+     *  @brief Abstract helper class for Executor classes
+     */
     template <typename SuccessHandler, typename FailHandler>
     class AsyncExecutorBase {
 
@@ -11,21 +14,33 @@ namespace lab {
         using SuccessHandlerType = SuccessHandler;
         using FailHandlerType = FailHandler;
 
+        /**
+         *  @brief Setter for callback that will be invoked after succesful executing
+         */
         auto on_success(const SuccessHandler& callback) -> void
         {
             _on_success = callback;
         }
 
+        /**
+         *  @brief Setter for callback that will be invoked after succesful executing
+         */
         auto on_success(SuccessHandler&& callback) noexcept -> void
         {
             _on_success = std::move(callback);
         }
 
+        /**
+         *  @brief Setter for callback that will be invoked after some error that interrupted function execution
+         */
         auto on_fail(const FailHandler& callback) -> void
         {
             _on_fail = callback;
         }
 
+         /**
+         *  @brief Setter for callback that will be invoked after some error that interrupted function execution
+         */
         auto on_fail(FailHandler&& callback) noexcept -> void
         {
             _on_fail = std::move(callback);

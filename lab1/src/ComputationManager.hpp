@@ -1,17 +1,28 @@
 #pragma once
 
 #include "Executor.hpp"
+#include "ShortCircuitOperation.hpp"
+#include "TimeMeasuringExecutor.hpp"
+#include "MutualDefs.hpp"
+
 
 #include <atomic>
-#include <iostream>
+#include <mutex>
 
 namespace lab {
 
+    template <typename T, typename Executor>
+    concept NthResultCallbackType = requires (T x) {
+        x(std::declval<std::size_t>(),
+          std::declval<int>(),
+          std::declval<std::chrono::milliseconds>());
+    };
+
     template <auto Operation,
               typename T,
-              typename NthResultCallback,
               typename ResultCallback,
-              AsyncExecutor Executor>
+              AsyncExecutor Executor,
+              NthResultCallbackType<Executor> NthResultCallback>
     struct ManagerParams {
         ShortCircuitOperation<Operation, T> operation;
         std::vector<Executor> executors;
@@ -21,16 +32,17 @@ namespace lab {
 
     template <auto Operation,
               typename T,
-              typename NthResultCallback,
-              AsyncExecutor Executor>
+              AsyncExecutor Executor,
+              NthResultCallbackType<Executor> NthResultCallback>
     class ComputationManager {
-    public:
 
+    public:
         template <typename ResultCallback>
-        explicit ComputationManager(ManagerParams<Operation, T, NthResultCallback, ResultCallback, Executor>&& params)
+        explicit ComputationManager(ManagerParams<Operation, T, ResultCallback, Executor, NthResultCallback>&& params)
             : _executors {std::move(params.executors)},
               _op {std::move(params.operation)},
-              _on_nth_res{std::move(params.on_nth_result)}
+              _on_nth_res{std::move(params.on_nth_result)},
+              _starts (_executors.size())
         {
             _op.on_result([&] (std::size_t exec_number, bool result) {
                 for (std::size_t i = 0; i < _executors.size(); ++i) {
@@ -50,14 +62,17 @@ namespace lab {
                     if (!_running) {
                         return;
                     }
-                    _on_nth_res(n, result);
+                    const auto a = std::chrono::steady_clock::now() - _starts[n];
+                    _on_nth_res(n, result, std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now() - _starts[n]
+                            ));
                     _op.set_operand(n, result);
                 });
             }
         }
 
         template <rng::range Args>
-        requires std::is_same_v<rng::range_value_t<Args>, ct::args_t<typename Executor::Function>>
+        requires std::is_convertible_v<rng::range_value_t<Args>, ct::args_t<typename Executor::Function>>
         auto run (const Args& args) -> void
         {
             if (rng::size(args) != _executors.size()) {
@@ -66,6 +81,7 @@ namespace lab {
             _running = true;
             for (std::size_t i = 0; i < _executors.size(); ++i) {
                 std::apply([&] (auto&&... args) {
+                    _starts[i] = std::chrono::steady_clock::now();
                    _executors[i].run(std::forward<decltype(args)>(args)...);
                }, args[i]);
             }
@@ -74,6 +90,21 @@ namespace lab {
         auto stop (const std::size_t n) -> void
         {
             _executors[n].stop();
+        }
+
+        auto stop() -> void
+        {
+            for (auto& executor : _executors | rng::views::filter([] (const auto& ex) {return ex.running();}))
+            {
+                executor.stop();
+            }
+            _running = false;
+        }
+
+        [[nodiscard]]
+        auto running() const noexcept -> bool
+        {
+            return _running;
         }
 
     ~ComputationManager() {
@@ -87,5 +118,6 @@ namespace lab {
         ShortCircuitOperation<Operation, T> _op;
         NthResultCallback _on_nth_res;
         std::atomic<bool> _running = false;
+        std::vector <std::chrono::steady_clock::time_point> _starts;
     };
 }

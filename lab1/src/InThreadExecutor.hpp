@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Utils.hpp"
 #include "Executor.hpp"
 
 #include <functional>
@@ -30,6 +29,7 @@ namespace lab {
         explicit InThreadExecutor(Func func) noexcept;
 
         InThreadExecutor(const InThreadExecutor& other);
+        auto operator= (const InThreadExecutor& other) -> InThreadExecutor<Func>&;
 
         /**
          *  @brief Call func in separate thread with args as arguments

@@ -1,6 +1,7 @@
 #pragma once
 
-/////// Maybe will be implemented
+/////// Variant with Boost.Process and unnamed pipes, not implemented fully
+
 /*
 #include "Utils.hpp"
 
