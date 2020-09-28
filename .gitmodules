@@ -1,6 +1,3 @@
-[submodule "lab1/3rdparty/indicators"]
-	path = lab1/3rdparty/indicators
-	url = https://github.com/p-ranav/indicators.git
 [submodule "lab1/3rdparty/fmt"]
 	path = lab1/3rdparty/fmt
 	url = https://github.com/fmtlib/fmt.git
