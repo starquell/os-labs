@@ -1,8 +1,9 @@
 #pragma once
 
-#include <functional>
+#include <condition_variable>
 #include <optional>
 #include <thread>
+#include <mutex>
 
 #ifdef __linux__
 #include <unistd.h>
@@ -12,44 +13,28 @@
 namespace lab {
 
     /**
-     *  @brief Concept of class that represents cancelator used for cancel running of ComputationManager
-     */
-    template <typename T>
-    concept Cancelator = requires (T t) {
-        typename T::Callback;
-        t.on_cancel(std::declval<typename T::Callback>());
-        t.start_monitoring();
-        t.stop_monitoring();
-        {t.canceled()} -> std::convertible_to<bool>;
-    };
-
-    /**
      *  @brief Waits that invokes callback after specific key press in other thread
      */
     class SimpleKeyCancelator {
 
     public:
         using Key = int;
-        using Callback = std::function<void()>;
 
         explicit SimpleKeyCancelator (Key key) noexcept;
 
         SimpleKeyCancelator (SimpleKeyCancelator&& other) noexcept;
 
         /**
-         *  @brief Setter for callback function that will ne invoked after key pressed
-         */
-        auto on_cancel (const Callback& callback) -> void;
-
-        /**
          *  @brief Starts checking for key press in separate thread
          */
-        auto start_monitoring() -> void;
+        auto start_monitoring(std::condition_variable& cv, std::mutex& mut) -> void;
 
         /**
          *  @brief Stops checking for key press (only after start_monitoring invoked)
          */
         auto stop_monitoring() noexcept -> bool;
+
+        auto key() const noexcept -> Key;
 
         /**
          *  @return True if cancelation key pressed
@@ -59,9 +44,8 @@ namespace lab {
 
     private:
         Key _key;
-        std::optional<Callback> _callback;
         std::optional<std::jthread> _thread;
-        std::atomic<bool> _canceled = false;
+        bool _canceled = false;
         termios _terminal;
     };
 }

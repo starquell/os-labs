@@ -1,5 +1,7 @@
 #include "Cancelator.hpp"
- namespace {
+
+
+namespace {
 
 #ifdef __linux__
 
@@ -29,18 +31,13 @@ namespace lab {
 
     SimpleKeyCancelator::SimpleKeyCancelator(SimpleKeyCancelator &&other) noexcept
             : _key {other._key},
-              _callback {other._callback},
               _thread {std::nullopt},
               _canceled {false}
     {}
 
-    auto SimpleKeyCancelator::on_cancel(const SimpleKeyCancelator::Callback &callback) -> void {
-        _callback = callback;
-    }
-
-    auto SimpleKeyCancelator::start_monitoring() -> void
+    auto SimpleKeyCancelator::start_monitoring(std::condition_variable& cv, std::mutex& mut) -> void
     {
-        if (_thread || !_callback) {
+        if (_thread) {
             return;
         }
 #ifdef __linux__
@@ -50,7 +47,11 @@ namespace lab {
 
             while (true) {
                 if (getchar() == _key) {
-                    (*_callback)();
+                    {
+                        std::scoped_lock lock{mut};
+                        _canceled = true;
+                    }
+                    cv.notify_one();
                     break;
                 }
                 if (stop.stop_requested()) {
@@ -77,5 +78,10 @@ namespace lab {
 
     auto SimpleKeyCancelator::canceled() const noexcept -> bool {
         return _canceled;
+    }
+
+    auto SimpleKeyCancelator::key() const noexcept -> SimpleKeyCancelator::Key
+    {
+        return _key;
     }
 }
