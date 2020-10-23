@@ -18,11 +18,6 @@ namespace lab {
               _name{name}
         {}
 
-
-
-        /**
-         *  @brief Call func in separate thread with args as arguments
-         */
         auto run(int arg,
                  std::condition_variable& cv,
                  std::mutex& mut,

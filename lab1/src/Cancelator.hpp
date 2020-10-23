@@ -12,9 +12,6 @@
 
 namespace lab {
 
-    /**
-     *  @brief Waits that invokes callback after specific key press in other thread
-     */
     class SimpleKeyCancelator {
 
     public:
@@ -26,6 +23,7 @@ namespace lab {
 
         /**
          *  @brief Starts checking for key press in separate thread
+         *  @param cv will be notified when cancelation key will be pressed
          */
         auto start_monitoring(std::condition_variable& cv, std::mutex& mut) -> void;
 
