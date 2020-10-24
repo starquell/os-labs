@@ -8,7 +8,6 @@
 namespace lab {
 
     template <typename Operation,
-              typename Operand,
               typename Func,
               typename Cancelator>
     class ComputationManager {
@@ -16,10 +15,8 @@ namespace lab {
     public:
         explicit ComputationManager(const std::vector<FunctionExecutor<Func>>& funcs,
                                     Operation op,
-                                    Operand short_circuit_value,
                                     Cancelator cancelator)
             : _funcs{funcs},
-              _short_circuit_value{short_circuit_value},
               _op{op},
               _cancelator{std::move(cancelator)}
         {}
@@ -51,14 +48,14 @@ namespace lab {
                 while (!func_results.empty()) {
                     const auto [func, res] = func_results.front();
                     std::cout << "Function " << func << " returned " << res << std::endl;
-                    if (res == _short_circuit_value) {
+                    if (_op.is_short_circuit(res)) {
                         std::cout << "\nOperation result : " << res << std::endl;
                         return;
                     }
                     operands.push_back(res);
                     ++received;
                     if (received == _funcs.size()) {
-                        std::cout << "Result : " << _op(operands) << std::endl;
+                        std::cout << "Result : " << _op.compute(operands) << std::endl;
                         return;
                     }
                     func_results.pop();
@@ -72,7 +69,6 @@ namespace lab {
 
     private:
         std::vector<FunctionExecutor<Func>> _funcs;
-        Operand _short_circuit_value;
         Operation _op;
         Cancelator _cancelator;
     };
