@@ -1,22 +1,32 @@
 #include "Cancelator.hpp"
 
+#ifdef __linux__
+#include <fcntl.h>
+#endif
 
 namespace {
 
 #ifdef __linux__
 
-    auto replace_terminal() noexcept -> termios {
+    auto replace_terminal() noexcept -> termios
+    {
         termios old_tio{};      // for storing settings from old terminal
         tcgetattr(STDIN_FILENO, &old_tio);  // save old terminal
 
         termios new_tio{old_tio};
         new_tio.c_lflag &= (~ICANON & ~ECHO);// disable canonical mode (buffered i/o) and local echo
+
+        const int flags = fcntl(STDOUT_FILENO, F_GETFL);
+        fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
         tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);  /* set the new settings */
 
         return old_tio;
     }
 
-    auto set_terminal(const termios &terminal) -> void {
+    auto set_terminal(const termios &terminal) -> void
+    {
+        const int flags = fcntl(STDOUT_FILENO, F_GETFL);
+        fcntl(STDIN_FILENO, F_SETFL, flags | ~O_NONBLOCK);
         tcsetattr(STDIN_FILENO, TCSANOW, &terminal);
     }
 
@@ -57,6 +67,7 @@ namespace lab {
                 if (stop.stop_requested()) {
                     break;
                 }
+                std::this_thread::yield();
             }
 #ifdef __linux__
             set_terminal(_terminal);

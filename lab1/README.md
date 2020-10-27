@@ -9,4 +9,5 @@ Extensions:
 - Generalized to arbitrary binary operation
 
 Requires C++20. 
+
 Built and tested with CMake and GCC 10.0.1.
