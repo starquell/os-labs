@@ -59,14 +59,13 @@ namespace lab {
                         return f.name() == func;
                     }));
 
-                    std::cout << "Function " << func << " returned " << res << std::endl;
                     if (_op.is_short_circuit(res)) {
-                        std::cout << "\nOperation result : " << res << std::endl;
+                        std::cout << "\nResult : " << res << std::endl;
                         return;
                     }
                     operands.push_back(res);
                     if (_funcs.empty()) {
-                        std::cout << "Result : " << _op.compute(operands) << std::endl;
+                        std::cout << "\nResult : " << _op.compute(operands) << std::endl;
                         return;
                     }
                     func_results.pop();
