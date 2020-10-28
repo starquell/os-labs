@@ -27,7 +27,6 @@ namespace lab {
             std::condition_variable cv;
             std::queue<std::pair<std::string, bool>> func_results;
             std::deque<bool> operands;
-            std::size_t received{};
 
             _cancelator.start_monitoring(cv, mut);
             std::cout << "\nPress '" << static_cast<char>(_cancelator.key()) << "' to cancel computation\n\n" << std::flush;
@@ -42,19 +41,31 @@ namespace lab {
 
                 if (_cancelator.canceled()) {
                     std::cout << "Computation has been cancelled." << std::endl;
+                    std::cout << "Result has not been received, functions ";
+
+                    for (std::size_t i = 0; i < _funcs.size(); ++i) {
+                        std::cout << _funcs[i].name();
+                        if (i != _funcs.size() - 1) {
+                            std::cout << ", ";
+                        }
+                    }
+                    std::cout << " have not computed" << std::endl;
                     return;
                 }
 
                 while (!func_results.empty()) {
                     const auto [func, res] = func_results.front();
+                    _funcs.erase(std::find_if(_funcs.begin(), _funcs.end(), [func = func] (const auto& f) {
+                        return f.name() == func;
+                    }));
+
                     std::cout << "Function " << func << " returned " << res << std::endl;
                     if (_op.is_short_circuit(res)) {
                         std::cout << "\nOperation result : " << res << std::endl;
                         return;
                     }
                     operands.push_back(res);
-                    ++received;
-                    if (received == _funcs.size()) {
+                    if (_funcs.empty()) {
                         std::cout << "Result : " << _op.compute(operands) << std::endl;
                         return;
                     }

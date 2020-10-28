@@ -36,6 +36,11 @@ namespace lab {
             th.detach();
         }
 
+        auto name() const noexcept -> const std::string&
+        {
+            return _name;
+        }
+
     private:
         Func _func;
         std::string _name;
